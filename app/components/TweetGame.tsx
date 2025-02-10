@@ -9,13 +9,13 @@ import Image from 'next/image';
 interface Tweet {
   id: string;
   text: string;
-  real: boolean;
+  true: boolean;
 }
 
 interface TweetCardProps extends Tweet {
   tweets: Tweet[];
   setTweets: React.Dispatch<React.SetStateAction<Tweet[]>>;
-  onSwipe: (isRight: boolean, real: boolean) => void;
+  onSwipe: (isRight: boolean, isTrue: boolean) => void;
   index: number;
   motionX: MotionValue<number>;
 }
@@ -57,8 +57,8 @@ const TweetGame = () => {
     fetchTweets();
   }, []);
 
-  const handleSwipe = (isRight: boolean, real: boolean) => {
-    if ((isRight && real) || (!isRight && !real)) {
+  const handleSwipe = (isRight: boolean, isTrue: boolean) => {
+    if ((isRight && isTrue) || (!isRight && !isTrue)) {
       setScore(prev => prev + 1);
     }
   };
@@ -76,7 +76,7 @@ const TweetGame = () => {
       duration: 1,
       onComplete: () => {
         setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
-        handleSwipe(isRight, currentTweet.real);
+        handleSwipe(isRight, currentTweet.true);
       }
     });
   };
@@ -145,7 +145,7 @@ const TweetGame = () => {
 const TweetCard = ({
   id,
   text,
-  real,
+  true: isTrue,
   tweets,
   setTweets,
   onSwipe,
@@ -183,7 +183,7 @@ const TweetCard = ({
         duration: 0.5,
         onComplete: () => {
           setTweets((prev) => prev.filter((t) => t.id !== id));
-          onSwipe(xVal > 0, real);
+          onSwipe(xVal > 0, isTrue);
         }
       });
     } else {
