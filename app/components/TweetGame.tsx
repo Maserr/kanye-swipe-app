@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, MotionValue } from "framer-motion";
 import { collection, getDocs, query, startAfter, limit, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import Image from 'next/image';
@@ -20,6 +20,7 @@ interface TweetCardProps extends Tweet {
   setTweets: React.Dispatch<React.SetStateAction<Tweet[]>>;
   onSwipe: (isRight: boolean, isTrue: boolean) => void;
   index: number;
+  x: MotionValue<number>;
 }
 
 const BATCH_SIZE = 10;
@@ -138,10 +139,21 @@ const TweetGame = () => {
   };
 
   const handleButtonClickWithAnimation = (isRight: boolean) => {
-    if (isAnimating) return;
+    if (isAnimating || tweets.length === 0) return;
+    
     setIsAnimating(true);
-    handleButtonClick(isRight);
-    setTimeout(() => setIsAnimating(false), 500); // Match animation duration
+    const targetX = isRight ? 200 : -200;
+    
+    animate(cardX, targetX, {
+      type: "spring",
+      duration: 0.5,
+      onComplete: () => {
+        const currentTweet = tweets[tweets.length - 1];
+        setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
+        handleSwipe(isRight, currentTweet.true);
+        setIsAnimating(false);
+      }
+    });
   };
 
   const handleRestart = () => {
@@ -206,6 +218,7 @@ const TweetGame = () => {
             setTweets={setTweets} 
             onSwipe={handleSwipe}
             index={index}
+            x={cardX}
             {...tweet} 
           />
         ))}
@@ -243,8 +256,8 @@ const TweetCard = ({
   setTweets,
   onSwipe,
   index,
+  x,
 }: TweetCardProps) => {
-  const x = useMotionValue(0);
   const rotate = useTransform(x, [-100, 100], [-5, 5]);
   const opacity = useTransform(x, [-100, 0, 100], [0.5, 1, 0.5]);
   
