@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import { motion, useMotionValue, useTransform, animate, MotionValue } from "framer-motion";
-import { collection, getDocs, query, startAfter, limit, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { collection, getDocs, query, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import Image from 'next/image';
 import ScoreAnimation from "./ScoreAnimation";
@@ -21,9 +21,6 @@ interface TweetCardProps extends Tweet {
   onSwipe: (isRight: boolean, isTrue: boolean) => void;
   index: number;
 }
-
-
-const BATCH_SIZE = 10;
 
 const TweetGame = () => {
   const [tweets, setTweets] = useState<Tweet[]>([]);
