@@ -9,7 +9,7 @@ import Image from 'next/image';
 interface Tweet {
   id: string;
   text: string;
-  true: boolean;
+  TRUE: boolean;
 }
 
 interface TweetCardProps extends Tweet {
@@ -76,7 +76,7 @@ const TweetGame = () => {
       duration: 1,
       onComplete: () => {
         setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
-        handleSwipe(isRight, currentTweet.true);
+        handleSwipe(isRight, currentTweet.TRUE);
       }
     });
   };
@@ -145,7 +145,7 @@ const TweetGame = () => {
 const TweetCard = ({
   id,
   text,
-  true: isTrue,
+  TRUE,
   tweets,
   setTweets,
   onSwipe,
@@ -183,7 +183,7 @@ const TweetCard = ({
         duration: 0.5,
         onComplete: () => {
           setTweets((prev) => prev.filter((t) => t.id !== id));
-          onSwipe(xVal > 0, isTrue);
+          onSwipe(xVal > 0, TRUE);
         }
       });
     } else {
