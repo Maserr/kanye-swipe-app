@@ -5,6 +5,8 @@ import { motion, useMotionValue, useTransform, animate, MotionValue } from "fram
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "../../firebase";
 import Image from 'next/image';
+import ScoreAnimation from "./ScoreAnimation";
+import { useAudio } from '../hooks/useAudio';
 
 interface Tweet {
   id: string;
@@ -25,7 +27,11 @@ const TweetGame = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [score, setScore] = useState(0);
+  const [showScoreAnimation, setShowScoreAnimation] = useState(false);
+  const [isCorrectGuess, setIsCorrectGuess] = useState(false);
+  const [streak, setStreak] = useState(0);
   const cardX = useMotionValue(0);
+  const wrongSound = useAudio('/wrong-sound.mp3');
 
   useEffect(() => {
     const fetchTweets = async () => {
@@ -67,9 +73,20 @@ const TweetGame = () => {
   }, []);
 
   const handleSwipe = (isRight: boolean, isTrue: boolean) => {
-    if ((isRight && isTrue) || (!isRight && !isTrue)) {
+    const correct = (isRight && isTrue) || (!isRight && !isTrue);
+    
+    if (correct) {
       setScore(prev => prev + 1);
+      setStreak(prev => prev + 1);
+      setIsCorrectGuess(true);
+    } else {
+      setStreak(0);
+      setIsCorrectGuess(false);
+      wrongSound.play();
     }
+    
+    setShowScoreAnimation(true);
+    setTimeout(() => setShowScoreAnimation(false), 1000);
   };
 
   const handleButtonClick = (isRight: boolean) => {
@@ -111,7 +128,29 @@ const TweetGame = () => {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full px-4 sm:px-0">
-      <div className="text-xl font-bold">Score: {score}</div>
+      <div className="relative flex flex-col items-center">
+        <div className="flex items-center justify-center relative">
+          <motion.div
+            key={score}
+            initial={{ scale: 1 }}
+            animate={{ scale: showScoreAnimation ? 1.2 : 1 }}
+            className="text-2xl font-bold text-white"
+          >
+            Score: {score}
+          </motion.div>
+          {showScoreAnimation && <ScoreAnimation score={score} isCorrect={isCorrectGuess} />}
+        </div>
+        {streak > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-lg text-yellow-500 font-semibold mt-2"
+          >
+            🔥 {streak} Streak!
+          </motion.div>
+        )}
+      </div>
+      
       <div className="flex flex-col justify-center items-center w-full gap-6">
         <div className="relative h-[450px] w-[280px] sm:h-[500px] sm:w-[425px]">
           {tweets.map((tweet, index) => (
@@ -185,10 +224,10 @@ const TweetCard = ({
   const handleDragEnd = () => {
     const xVal = x.get();
     if (Math.abs(xVal) > 150) {
-      animate(x, xVal < 0 ? -200 : 200, {
+      animate(x, xVal < 0 ? -400 : 400, {
         type: "spring",
-        stiffness: 300,
-        damping: 20,
+        stiffness: 200,
+        damping: 15,
         duration: 0.5,
         onComplete: () => {
           setTweets((prev) => prev.filter((t) => t.id !== id));
@@ -198,8 +237,8 @@ const TweetCard = ({
     } else {
       animate(x, 0, {
         type: "spring",
-        stiffness: 300,
-        damping: 20,
+        stiffness: 400,
+        damping: 30,
         duration: 0.5
       });
     }
