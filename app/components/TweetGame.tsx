@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { collection, getDocs, query, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
+import { collection, getDocs, query} from "firebase/firestore";
 import { db } from "../../firebase";
 import Image from 'next/image';
 import ScoreAnimation from "./ScoreAnimation";
