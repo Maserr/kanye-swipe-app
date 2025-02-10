@@ -9,7 +9,7 @@ import Image from 'next/image';
 interface Tweet {
   id: string;
   text: string;
-  TRUE: boolean;
+  true: boolean;
 }
 
 interface TweetCardProps extends Tweet {
@@ -51,9 +51,9 @@ const TweetGame = () => {
         
         const shuffledTweets = [...tweetsList].sort(() => Math.random() - 0.5);
         setTweets(shuffledTweets);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching tweets:", error);
-        setError(`Failed to load tweets: ${error.message}`);
+        setError(error?.message || "Failed to load tweets");
       } finally {
         setLoading(false);
       }
@@ -81,7 +81,7 @@ const TweetGame = () => {
       duration: 1,
       onComplete: () => {
         setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
-        handleSwipe(isRight, currentTweet.TRUE);
+        handleSwipe(isRight, currentTweet.true);
       }
     });
   };
@@ -150,7 +150,7 @@ const TweetGame = () => {
 const TweetCard = ({
   id,
   text,
-  TRUE,
+  true: isTrue,
   tweets,
   setTweets,
   onSwipe,
@@ -188,7 +188,7 @@ const TweetCard = ({
         duration: 0.5,
         onComplete: () => {
           setTweets((prev) => prev.filter((t) => t.id !== id));
-          onSwipe(xVal > 0, TRUE);
+          onSwipe(xVal > 0, isTrue);
         }
       });
     } else {
