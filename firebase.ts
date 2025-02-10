@@ -15,17 +15,12 @@ if (!firebaseConfig.projectId) {
   throw new Error('Firebase Project ID is not defined in configuration');
 }
 
-try {
-  // Initialize Firebase
-  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  
-  // Initialize Firestore
-  const db = getFirestore(app);
-  
-  console.log('Firebase initialized successfully with project:', firebaseConfig.projectId);
-  
-  export { app, db };
-} catch (error) {
-  console.error('Error initializing Firebase:', error);
-  throw error;
-} 
+// Initialize Firebase
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Initialize Firestore
+const db = getFirestore(app);
+
+console.log('Firebase initialized successfully with project:', firebaseConfig.projectId);
+
+export { app, db }; 
