@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { collection, getDocs, query } from "firebase/firestore";
+import { collection, getDocs, query, startAfter, limit } from "firebase/firestore";
 import { db } from "../../firebase";
 import Image from 'next/image';
 import ScoreAnimation from "./ScoreAnimation";
 import { useAudio } from '../hooks/useAudio';
+import GameOverModal from "./GameOverModal";
 
 interface Tweet {
   id: string;
@@ -21,6 +22,8 @@ interface TweetCardProps extends Tweet {
   index: number;
 }
 
+const BATCH_SIZE = 10;
+
 const TweetGame = () => {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,44 +36,63 @@ const TweetGame = () => {
   const cardX = useMotionValue(0);
   const wrongSound = useAudio('/wrong-sound.mp3');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showGameOver, setShowGameOver] = useState(false);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchTweets = async (isInitial = false) => {
+    try {
+      setLoading(true);
+      const tweetsRef = collection(db, "tweets");
+      let q = query(tweetsRef);
+      
+      if (!isInitial && lastDoc) {
+        q = query(tweetsRef, startAfter(lastDoc), limit(BATCH_SIZE));
+      } else {
+        q = query(tweetsRef, limit(BATCH_SIZE));
+      }
+      
+      const tweetsSnapshot = await getDocs(q);
+      
+      if (tweetsSnapshot.empty) {
+        setHasMore(false);
+        if (isInitial) {
+          setError("No tweets found. Please add some tweets to the database.");
+        }
+        return;
+      }
+
+      setLastDoc(tweetsSnapshot.docs[tweetsSnapshot.docs.length - 1]);
+      
+      const tweetsList = tweetsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Tweet));
+      
+      const shuffledTweets = [...tweetsList].sort(() => Math.random() - 0.5);
+      
+      setTweets(prev => isInitial ? shuffledTweets : [...prev, ...shuffledTweets]);
+      setHasMore(tweetsSnapshot.docs.length === BATCH_SIZE);
+    } catch (error: unknown) {
+      console.error("Error fetching tweets:", error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Failed to load tweets");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTweets = async () => {
-      try {
-        console.log('Fetching tweets...');
-        const tweetsRef = collection(db, "tweets");
-        const q = query(tweetsRef);
-        
-        console.log('Executing query...');
-        const tweetsSnapshot = await getDocs(q);
-        
-        if (tweetsSnapshot.empty) {
-          console.log('No tweets found in database');
-          setError("No tweets found. Please add some tweets to the database.");
-          return;
-        }
+    if (tweets.length < 5 && hasMore && !loading) {
+      fetchTweets(false);
+    }
+  }, [tweets.length, hasMore, loading]);
 
-        console.log(`Found ${tweetsSnapshot.size} tweets`);
-        const tweetsList = tweetsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Tweet));
-        
-        const shuffledTweets = [...tweetsList].sort(() => Math.random() - 0.5);
-        setTweets(shuffledTweets);
-      } catch (error: unknown) {
-        console.error("Error fetching tweets:", error);
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError("Failed to load tweets");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTweets();
+  useEffect(() => {
+    fetchTweets(true);
   }, []);
 
   const handleSwipe = (isRight: boolean, isTrue: boolean) => {
@@ -86,10 +108,7 @@ const TweetGame = () => {
       setLives(prev => {
         const newLives = prev - 1;
         if (newLives <= 0) {
-          setTimeout(() => {
-            setLives(3);
-            setScore(0);
-          }, 300);
+          setShowGameOver(true);
           return 0;
         }
         return newLives;
@@ -123,6 +142,15 @@ const TweetGame = () => {
     setIsAnimating(true);
     handleButtonClick(isRight);
     setTimeout(() => setIsAnimating(false), 500); // Match animation duration
+  };
+
+  const handleRestart = () => {
+    setLives(3);
+    setScore(0);
+    setStreak(0);
+    setShowGameOver(false);
+    // Refetch tweets to shuffle them
+    fetchTweets();
   };
 
   if (loading) {
@@ -202,6 +230,7 @@ const TweetGame = () => {
           </svg>
         </button>
       </div>
+      {showGameOver && <GameOverModal score={score} onRestart={handleRestart} />}
     </div>
   );
 };
@@ -294,7 +323,7 @@ const TweetCard = ({
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden relative">
             <Image 
-              src="/ye-profile.jpg" 
+              src="/ye-profile.jpg"
               alt="Ye"
               fill
               className="object-cover"
