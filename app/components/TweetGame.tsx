@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, MotionValue } from "framer-motion";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "../../firebase";
 import Image from 'next/image';
@@ -32,6 +32,7 @@ const TweetGame = () => {
   const [streak, setStreak] = useState(0);
   const cardX = useMotionValue(0);
   const wrongSound = useAudio('/wrong-sound.mp3');
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const fetchTweets = async () => {
@@ -102,20 +103,26 @@ const TweetGame = () => {
 
   const handleButtonClick = (isRight: boolean) => {
     if (tweets.length === 0) return;
+    
     const currentTweet = tweets[tweets.length - 1];
-    
     const targetX = isRight ? 200 : -200;
-    
+
+    // Animate the card swipe
     animate(cardX, targetX, {
       type: "spring",
-      stiffness: 100,
-      damping: 30,
-      duration: 1,
+      duration: 0.5,
       onComplete: () => {
         setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
         handleSwipe(isRight, currentTweet.true);
       }
     });
+  };
+
+  const handleButtonClickWithAnimation = (isRight: boolean) => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    handleButtonClick(isRight);
+    setTimeout(() => setIsAnimating(false), 500); // Match animation duration
   };
 
   if (loading) {
@@ -177,18 +184,18 @@ const TweetGame = () => {
       </div>
       <div className="flex justify-center gap-8 sm:gap-16 mt-4 sm:mt-auto pb-4">
         <button
-          onClick={() => handleButtonClick(false)}
+          onClick={() => handleButtonClickWithAnimation(false)}
           className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 active:bg-red-700 transition-colors touch-manipulation"
-          disabled={tweets.length === 0}
+          disabled={tweets.length === 0 || isAnimating}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
         <button
-          onClick={() => handleButtonClick(true)}
+          onClick={() => handleButtonClickWithAnimation(true)}
           className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 active:bg-green-700 transition-colors touch-manipulation"
-          disabled={tweets.length === 0}
+          disabled={tweets.length === 0 || isAnimating}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
