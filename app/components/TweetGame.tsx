@@ -319,7 +319,7 @@ const TweetCard = ({
           </div>
         </div>
 
-        <div className="text-xs text-gray-500 mt-4 text-center">
+        <div className="text-sm text-gray-500 text-center mt-4">
           Swipe right if you think it&apos;s real, left if fake
         </div>
       </div>
