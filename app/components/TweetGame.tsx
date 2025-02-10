@@ -51,9 +51,13 @@ const TweetGame = () => {
         
         const shuffledTweets = [...tweetsList].sort(() => Math.random() - 0.5);
         setTweets(shuffledTweets);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error fetching tweets:", error);
-        setError(error?.message || "Failed to load tweets");
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("Failed to load tweets");
+        }
       } finally {
         setLoading(false);
       }
