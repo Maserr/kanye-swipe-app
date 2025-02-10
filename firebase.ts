@@ -10,6 +10,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
+// Add console logging to debug environment variables
+if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+  console.error('Firebase Project ID is not defined in environment variables');
+}
+
+console.log('Firebase Config:', {
+  ...firebaseConfig,
+  apiKey: firebaseConfig.apiKey ? '**exists**' : '**missing**',
+});
+
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
