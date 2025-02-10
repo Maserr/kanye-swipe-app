@@ -84,7 +84,7 @@ const TweetGame = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [lastDoc]);
 
   useEffect(() => {
     if (tweets.length < 5 && hasMore && !loading) {
@@ -119,23 +119,6 @@ const TweetGame = () => {
     
     setShowScoreAnimation(true);
     setTimeout(() => setShowScoreAnimation(false), 500);
-  };
-
-  const handleButtonClick = (isRight: boolean) => {
-    if (tweets.length === 0) return;
-    
-    const currentTweet = tweets[tweets.length - 1];
-    const targetX = isRight ? 200 : -200;
-
-    // Animate the card swipe
-    animate(cardX, targetX, {
-      type: "spring",
-      duration: 0.5,
-      onComplete: () => {
-        setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
-        handleSwipe(isRight, currentTweet.true);
-      }
-    });
   };
 
   const handleButtonClickWithAnimation = (isRight: boolean) => {
