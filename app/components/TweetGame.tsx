@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { collection, getDocs, query, startAfter, limit } from "firebase/firestore";
+import { collection, getDocs, query, startAfter, limit, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import Image from 'next/image';
 import ScoreAnimation from "./ScoreAnimation";
@@ -37,10 +37,10 @@ const TweetGame = () => {
   const wrongSound = useAudio('/wrong-sound.mp3');
   const [isAnimating, setIsAnimating] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
-  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchTweets = async (isInitial = false) => {
+  const fetchTweets = useCallback(async (isInitial = false) => {
     try {
       setLoading(true);
       const tweetsRef = collection(db, "tweets");
@@ -83,17 +83,17 @@ const TweetGame = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (tweets.length < 5 && hasMore && !loading) {
       fetchTweets(false);
     }
-  }, [tweets.length, hasMore, loading]);
+  }, [tweets.length, hasMore, loading, fetchTweets]);
 
   useEffect(() => {
     fetchTweets(true);
-  }, []);
+  }, [fetchTweets]);
 
   const handleSwipe = (isRight: boolean, isTrue: boolean) => {
     const correct = (isRight && isTrue) || (!isRight && !isTrue);
