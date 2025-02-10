@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="h-screen w-screen flex flex-col items-center justify-start pt-12 sm:justify-center relative overflow-hidden">
       {/* Background container */}
       <div className="absolute inset-0 flex">
         {/* Left side */}
@@ -36,8 +36,11 @@ export default function Home() {
       </div>
 
       {/* Content */}
-      <main className="w-full max-w-4xl flex flex-col items-center justify-center relative z-10">
-        <h1 className="text-4xl font-bold mb-8 text-white">Kanye Tweet Game</h1>
+      <main className="w-full max-w-4xl flex flex-col items-center relative z-10">
+        <div className="text-center mb-6">
+          <h1 className="text-5xl font-bold text-white font-['Helvetica']">YE OR NEY</h1>
+          <p className="text-lg text-white font-['Helvetica'] mt-2">Kanye West or AI? Swipe to find out!</p>
+        </div>
         <TweetGame />
       </main>
     </div>

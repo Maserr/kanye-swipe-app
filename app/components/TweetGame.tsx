@@ -27,6 +27,7 @@ const TweetGame = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
   const [isCorrectGuess, setIsCorrectGuess] = useState(false);
   const [streak, setStreak] = useState(0);
@@ -82,6 +83,18 @@ const TweetGame = () => {
     } else {
       setStreak(0);
       setIsCorrectGuess(false);
+      setLives(prev => {
+        const newLives = prev - 1;
+        if (newLives <= 0) {
+          // Reset lives after a short delay to show the last heart being lost
+          setTimeout(() => {
+            setLives(3);
+            setScore(0);
+          }, 500);
+          return 0;
+        }
+        return newLives;
+      });
       wrongSound.play();
     }
     
@@ -127,17 +140,18 @@ const TweetGame = () => {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full px-4 sm:px-0">
+    <div className="flex flex-col items-center gap-4 w-full px-4 sm:px-0 h-[85vh] sm:h-[100dvh] max-h-[800px]">
       <div className="relative flex flex-col items-center">
-        <div className="flex items-center justify-center relative">
+        <div className="flex items-center justify-center relative gap-3">
           <motion.div
             key={score}
             initial={{ scale: 1 }}
             animate={{ scale: showScoreAnimation ? 1.2 : 1 }}
-            className="text-2xl font-bold text-white"
+            className="text-2xl font-bold text-white font-['Helvetica']"
           >
             Score: {score}
           </motion.div>
+          <span className="text-2xl font-bold text-white font-['Helvetica']">❤️ {lives}/3</span>
           {showScoreAnimation && <ScoreAnimation score={score} isCorrect={isCorrectGuess} />}
         </div>
         {streak > 1 && (
@@ -151,40 +165,38 @@ const TweetGame = () => {
         )}
       </div>
       
-      <div className="flex flex-col justify-center items-center w-full gap-6">
-        <div className="relative h-[450px] w-[280px] sm:h-[500px] sm:w-[425px]">
-          {tweets.map((tweet, index) => (
-            <TweetCard 
-              key={tweet.id} 
-              tweets={tweets} 
-              setTweets={setTweets} 
-              onSwipe={handleSwipe}
-              index={index}
-              motionX={cardX}
-              {...tweet} 
-            />
-          ))}
-        </div>
-        <div className="flex justify-center gap-8 sm:gap-16">
-          <button
-            onClick={() => handleButtonClick(false)}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 active:bg-red-700 transition-colors touch-manipulation"
-            disabled={tweets.length === 0}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <button
-            onClick={() => handleButtonClick(true)}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 active:bg-green-700 transition-colors touch-manipulation"
-            disabled={tweets.length === 0}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </button>
-        </div>
+      <div className="relative h-[60vh] w-[280px] sm:h-[500px] sm:w-[425px]">
+        {tweets.map((tweet, index) => (
+          <TweetCard 
+            key={tweet.id} 
+            tweets={tweets} 
+            setTweets={setTweets} 
+            onSwipe={handleSwipe}
+            index={index}
+            motionX={cardX}
+            {...tweet} 
+          />
+        ))}
+      </div>
+      <div className="flex justify-center gap-8 sm:gap-16 mt-4 sm:mt-auto pb-4">
+        <button
+          onClick={() => handleButtonClick(false)}
+          className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 active:bg-red-700 transition-colors touch-manipulation"
+          disabled={tweets.length === 0}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <button
+          onClick={() => handleButtonClick(true)}
+          className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 active:bg-green-700 transition-colors touch-manipulation"
+          disabled={tweets.length === 0}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </button>
       </div>
     </div>
   );
@@ -294,14 +306,15 @@ const TweetCard = ({
               priority
             />
           </div>
-          <div className="flex-1">
+          
+          <div className="flex flex-col">
             <div className="flex items-center gap-1">
               <span className="font-bold text-[15px] text-[#0F1419]">ye</span>
               <svg className="w-4 h-4 text-[#FFD700]" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
               </svg>
-              <span className="text-[#536471] text-[15px]">@kanyewest</span>
             </div>
+            <span className="text-[#536471] text-[15px]">@kanyewest</span>
           </div>
         </div>
 
