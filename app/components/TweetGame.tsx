@@ -32,28 +32,22 @@ const TweetGame = () => {
   const [isCorrectGuess, setIsCorrectGuess] = useState(false);
   const [streak, setStreak] = useState(0);
   const [showGameOver, setShowGameOver] = useState(false);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const [hasMore, setHasMore] = useState(true);
   
   const wrongSound = useAudio('/wrong-sound.mp3');
 
   const fetchTweets = async () => {
     try {
       setLoading(true);
-      console.log('Fetching tweets...');
       const tweetsRef = collection(db, "tweets");
       const q = query(tweetsRef);
       
-      console.log('Executing query...');
       const tweetsSnapshot = await getDocs(q);
       
       if (tweetsSnapshot.empty) {
-        console.log('No tweets found in database');
         setError("No tweets found. Please add some tweets to the database.");
         return;
       }
 
-      console.log(`Found ${tweetsSnapshot.size} tweets`);
       const tweetsList = tweetsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
