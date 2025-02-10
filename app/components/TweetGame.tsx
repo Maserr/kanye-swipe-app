@@ -1,14 +1,23 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, MotionValue } from "framer-motion";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "../../firebase";
+import Image from 'next/image';
 
 interface Tweet {
   id: string;
   text: string;
   real: boolean;
+}
+
+interface TweetCardProps extends Tweet {
+  tweets: Tweet[];
+  setTweets: React.Dispatch<React.SetStateAction<Tweet[]>>;
+  onSwipe: (isRight: boolean, real: boolean) => void;
+  index: number;
+  motionX: MotionValue<number>;
 }
 
 const TweetGame = () => {
@@ -49,9 +58,7 @@ const TweetGame = () => {
   }, []);
 
   const handleSwipe = (isRight: boolean, real: boolean) => {
-    if (isRight && real) {
-      setScore(prev => prev + 1);
-    } else if (!isRight && !real) {
+    if ((isRight && real) || (!isRight && !real)) {
       setScore(prev => prev + 1);
     }
   };
@@ -134,14 +141,6 @@ const TweetGame = () => {
     </div>
   );
 };
-
-interface TweetCardProps extends Tweet {
-  tweets: Tweet[];
-  setTweets: React.Dispatch<React.SetStateAction<Tweet[]>>;
-  onSwipe: (isRight: boolean, real: boolean) => void;
-  index: number;
-  motionX: MotionValue<number>;
-}
 
 const TweetCard = ({
   id,
@@ -237,11 +236,14 @@ const TweetCard = ({
     >
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-            <img 
+          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden relative">
+            <Image 
               src="/ye-profile.jpg" 
               alt="Ye"
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 40px, 40px"
+              priority
             />
           </div>
           <div className="flex-1">
@@ -273,7 +275,7 @@ const TweetCard = ({
         </div>
 
         <div className="text-xs text-gray-500 mt-4 text-center">
-          Swipe right if you think it's real, left if fake
+          Swipe right if you think it&apos;s real, left if fake
         </div>
       </div>
     </motion.div>
