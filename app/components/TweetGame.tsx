@@ -19,7 +19,6 @@ interface TweetCardProps extends Tweet {
   setTweets: React.Dispatch<React.SetStateAction<Tweet[]>>;
   onSwipe: (isRight: boolean, isTrue: boolean) => void;
   index: number;
-  motionX: MotionValue<number>;
 }
 
 const TweetGame = () => {
@@ -172,7 +171,6 @@ const TweetGame = () => {
             setTweets={setTweets} 
             onSwipe={handleSwipe}
             index={index}
-            motionX={cardX}
             {...tweet} 
           />
         ))}
@@ -209,7 +207,6 @@ const TweetCard = ({
   setTweets,
   onSwipe,
   index,
-  motionX,
 }: TweetCardProps) => {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-100, 100], [-5, 5]);
