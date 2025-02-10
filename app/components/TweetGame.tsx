@@ -20,8 +20,8 @@ interface TweetCardProps extends Tweet {
   setTweets: React.Dispatch<React.SetStateAction<Tweet[]>>;
   onSwipe: (isRight: boolean, isTrue: boolean) => void;
   index: number;
-  x: MotionValue<number>;
 }
+
 
 const BATCH_SIZE = 10;
 
@@ -34,46 +34,36 @@ const TweetGame = () => {
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
   const [isCorrectGuess, setIsCorrectGuess] = useState(false);
   const [streak, setStreak] = useState(0);
-  const cardX = useMotionValue(0);
-  const wrongSound = useAudio('/wrong-sound.mp3');
-  const [isAnimating, setIsAnimating] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  
+  const wrongSound = useAudio('/wrong-sound.mp3');
 
-  const fetchTweets = useCallback(async (isInitial = false) => {
+  const fetchTweets = async () => {
     try {
       setLoading(true);
+      console.log('Fetching tweets...');
       const tweetsRef = collection(db, "tweets");
-      let q = query(tweetsRef);
+      const q = query(tweetsRef);
       
-      if (!isInitial && lastDoc) {
-        q = query(tweetsRef, startAfter(lastDoc), limit(BATCH_SIZE));
-      } else {
-        q = query(tweetsRef, limit(BATCH_SIZE));
-      }
-      
+      console.log('Executing query...');
       const tweetsSnapshot = await getDocs(q);
       
       if (tweetsSnapshot.empty) {
-        setHasMore(false);
-        if (isInitial) {
-          setError("No tweets found. Please add some tweets to the database.");
-        }
+        console.log('No tweets found in database');
+        setError("No tweets found. Please add some tweets to the database.");
         return;
       }
 
-      setLastDoc(tweetsSnapshot.docs[tweetsSnapshot.docs.length - 1]);
-      
+      console.log(`Found ${tweetsSnapshot.size} tweets`);
       const tweetsList = tweetsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as Tweet));
       
       const shuffledTweets = [...tweetsList].sort(() => Math.random() - 0.5);
-      
-      setTweets(prev => isInitial ? shuffledTweets : [...prev, ...shuffledTweets]);
-      setHasMore(tweetsSnapshot.docs.length === BATCH_SIZE);
+      setTweets(shuffledTweets);
     } catch (error: unknown) {
       console.error("Error fetching tweets:", error);
       if (error instanceof Error) {
@@ -84,17 +74,11 @@ const TweetGame = () => {
     } finally {
       setLoading(false);
     }
-  }, [lastDoc]);
+  };
 
   useEffect(() => {
-    if (tweets.length < 5 && hasMore && !loading) {
-      fetchTweets(false);
-    }
-  }, [tweets.length, hasMore, loading, fetchTweets]);
-
-  useEffect(() => {
-    fetchTweets(true);
-  }, [fetchTweets]);
+    fetchTweets();
+  }, []);
 
   const handleSwipe = (isRight: boolean, isTrue: boolean) => {
     const correct = (isRight && isTrue) || (!isRight && !isTrue);
@@ -121,22 +105,12 @@ const TweetGame = () => {
     setTimeout(() => setShowScoreAnimation(false), 500);
   };
 
-  const handleButtonClickWithAnimation = (isRight: boolean) => {
-    if (isAnimating || tweets.length === 0) return;
+  const handleButtonClick = (isRight: boolean) => {
+    if (tweets.length === 0) return;
     
-    setIsAnimating(true);
-    const targetX = isRight ? 200 : -200;
-    
-    animate(cardX, targetX, {
-      type: "spring",
-      duration: 0.5,
-      onComplete: () => {
-        const currentTweet = tweets[tweets.length - 1];
-        setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
-        handleSwipe(isRight, currentTweet.true);
-        setIsAnimating(false);
-      }
-    });
+    const currentTweet = tweets[tweets.length - 1];
+    setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
+    handleSwipe(isRight, currentTweet.true);
   };
 
   const handleRestart = () => {
@@ -144,7 +118,6 @@ const TweetGame = () => {
     setScore(0);
     setStreak(0);
     setShowGameOver(false);
-    // Refetch tweets to shuffle them
     fetchTweets();
   };
 
@@ -201,25 +174,24 @@ const TweetGame = () => {
             setTweets={setTweets} 
             onSwipe={handleSwipe}
             index={index}
-            x={cardX}
             {...tweet} 
           />
         ))}
       </div>
       <div className="flex justify-center gap-8 sm:gap-16 mt-4 sm:mt-auto pb-4">
         <button
-          onClick={() => handleButtonClickWithAnimation(false)}
+          onClick={() => handleButtonClick(false)}
           className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 active:bg-red-700 transition-colors touch-manipulation"
-          disabled={tweets.length === 0 || isAnimating}
+          disabled={tweets.length === 0}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
         <button
-          onClick={() => handleButtonClickWithAnimation(true)}
+          onClick={() => handleButtonClick(true)}
           className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 active:bg-green-700 transition-colors touch-manipulation"
-          disabled={tweets.length === 0 || isAnimating}
+          disabled={tweets.length === 0}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -239,8 +211,8 @@ const TweetCard = ({
   setTweets,
   onSwipe,
   index,
-  x,
 }: TweetCardProps) => {
+  const x = useMotionValue(0);
   const rotate = useTransform(x, [-100, 100], [-5, 5]);
   const opacity = useTransform(x, [-100, 0, 100], [0.5, 1, 0.5]);
   
@@ -303,13 +275,13 @@ const TweetCard = ({
 
   return (
     <motion.div
-      className="absolute inset-0 w-full h-full rounded-2xl p-4 shadow-lg cursor-grab active:cursor-grabbing touch-manipulation font-['Helvetica'] will-change-transform"
       style={style}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.5}
       dragMomentum={false}
       onDragEnd={handleDragEnd}
+      className="absolute inset-0 bg-white rounded-2xl p-4 shadow-lg cursor-grab active:cursor-grabbing touch-none"
       transition={{ 
         duration: 0.2,
         ease: "easeOut"
