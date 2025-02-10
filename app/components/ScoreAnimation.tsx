@@ -11,10 +11,14 @@ const ScoreAnimation = ({ score, isCorrect }: ScoreAnimationProps) => {
     <AnimatePresence>
       <motion.div
         key={score}
-        initial={{ y: -15, opacity: 0 }}
+        initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 15, opacity: 0 }}
-        className="absolute right-[-80px] top-[-10px] pointer-events-none"
+        exit={{ y: 10, opacity: 0 }}
+        className="absolute right-[-80px] top-[-10px] pointer-events-none will-change-transform"
+        transition={{
+          duration: 0.3,
+          ease: "easeOut"
+        }}
       >
         <div className="w-16 h-16 relative">
           <Image

@@ -86,11 +86,10 @@ const TweetGame = () => {
       setLives(prev => {
         const newLives = prev - 1;
         if (newLives <= 0) {
-          // Reset lives after a short delay to show the last heart being lost
           setTimeout(() => {
             setLives(3);
             setScore(0);
-          }, 500);
+          }, 300);
           return 0;
         }
         return newLives;
@@ -99,7 +98,7 @@ const TweetGame = () => {
     }
     
     setShowScoreAnimation(true);
-    setTimeout(() => setShowScoreAnimation(false), 1000);
+    setTimeout(() => setShowScoreAnimation(false), 500);
   };
 
   const handleButtonClick = (isRight: boolean) => {
@@ -213,12 +212,12 @@ const TweetCard = ({
   motionX,
 }: TweetCardProps) => {
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-30, 30]);
+  const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
   const background = useTransform(
     x,
     [-200, 0, 200],
-    ["rgb(239, 68, 68)", "rgb(255, 255, 255)", "rgb(34, 197, 94)"]
+    ["#ef4444", "#ffffff", "#22c55e"]
   );
 
   const isTop = index === tweets.length - 1;
@@ -274,25 +273,33 @@ const TweetCard = ({
     };
   };
 
+  const style = {
+    x: isTop ? x : 0,
+    rotate: isTop ? rotate : 0,
+    opacity,
+    background,
+    zIndex: index,
+    scale: isSecond ? 0.95 : 1,
+    y: isSecond ? 10 : 0,
+    willChange: isTop ? 'transform' : 'auto'
+  };
+
   return (
     <motion.div
-      className="absolute inset-0 w-full h-full rounded-2xl p-4 shadow-lg cursor-grab active:cursor-grabbing bg-white touch-manipulation font-['Helvetica']"
-      style={{
-        x: isTop ? x : 0,
-        rotate: isTop ? rotate : 0,
-        opacity,
-        background,
-        zIndex: index,
-        scale: isSecond ? 0.95 : 1,
-        y: isSecond ? 10 : 0,
-      }}
+      className="absolute inset-0 w-full h-full rounded-2xl p-4 shadow-lg cursor-grab active:cursor-grabbing bg-white touch-manipulation font-['Helvetica'] will-change-transform"
+      style={style}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.7}
+      dragElastic={0.5}
       onDragEnd={handleDragEnd}
-      whileTap={{ scale: isTop ? 1.02 : 1 }}
+      whileTap={{ scale: isTop ? 1.01 : 1 }}
       animate={{ scale: isTop ? 1 : isSecond ? 0.95 : 0.9 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 200,
+        damping: 25,
+        mass: 0.5
+      }}
     >
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-3 mb-3">
