@@ -212,11 +212,11 @@ const TweetCard = ({
   motionX,
 }: TweetCardProps) => {
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-15, 15]);
-  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
+  const rotate = useTransform(x, [-150, 150], [-10, 10]);
+  const opacity = useTransform(x, [-150, -100, 0, 100, 150], [0, 1, 1, 1, 0]);
   const background = useTransform(
     x,
-    [-200, 0, 200],
+    [-150, 0, 150],
     ["#ef4444", "#ffffff", "#22c55e"]
   );
 
@@ -234,11 +234,11 @@ const TweetCard = ({
 
   const handleDragEnd = () => {
     const xVal = x.get();
-    if (Math.abs(xVal) > 150) {
-      animate(x, xVal < 0 ? -400 : 400, {
+    if (Math.abs(xVal) > 100) {
+      animate(x, xVal < 0 ? -300 : 300, {
         type: "spring",
-        stiffness: 200,
-        damping: 15,
+        stiffness: 150,
+        damping: 20,
         duration: 0.5,
         onComplete: () => {
           setTweets((prev) => prev.filter((t) => t.id !== id));
@@ -248,8 +248,8 @@ const TweetCard = ({
     } else {
       animate(x, 0, {
         type: "spring",
-        stiffness: 400,
-        damping: 30,
+        stiffness: 300,
+        damping: 25,
         duration: 0.5
       });
     }
@@ -290,15 +290,16 @@ const TweetCard = ({
       style={style}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.5}
+      dragElastic={0.7}
+      dragMomentum={true}
       onDragEnd={handleDragEnd}
-      whileTap={{ scale: isTop ? 1.01 : 1 }}
+      whileTap={{ scale: isTop ? 1.02 : 1 }}
       animate={{ scale: isTop ? 1 : isSecond ? 0.95 : 0.9 }}
       transition={{ 
         type: "spring", 
-        stiffness: 200,
-        damping: 25,
-        mass: 0.5
+        stiffness: 150,
+        damping: 20,
+        mass: 0.8
       }}
     >
       <div className="flex flex-col h-full">
