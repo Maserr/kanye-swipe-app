@@ -212,34 +212,25 @@ const TweetCard = ({
   motionX,
 }: TweetCardProps) => {
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-150, 150], [-10, 10]);
-  const opacity = useTransform(x, [-150, -100, 0, 100, 150], [0, 1, 1, 1, 0]);
-  const background = useTransform(
+  const rotate = useTransform(x, [-100, 100], [-5, 5]);
+  const opacity = useTransform(x, [-100, 0, 100], [0.5, 1, 0.5]);
+  
+  // Simplified background color transform
+  const backgroundColor = useTransform(
     x,
-    [-150, 0, 150],
-    ["#ef4444", "#ffffff", "#22c55e"]
+    [-100, -50, 0, 50, 100],
+    ["rgb(239, 68, 68)", "rgb(255, 255, 255)", "rgb(255, 255, 255)", "rgb(255, 255, 255)", "rgb(34, 197, 94)"]
   );
-
+  
   const isTop = index === tweets.length - 1;
   const isSecond = index === tweets.length - 2;
 
-  useEffect(() => {
-    if (isTop) {
-      const unsubscribe = motionX.onChange((latest) => {
-        x.set(latest);
-      });
-      return () => unsubscribe();
-    }
-  }, [isTop, motionX, x]);
-
   const handleDragEnd = () => {
     const xVal = x.get();
-    if (Math.abs(xVal) > 100) {
-      animate(x, xVal < 0 ? -300 : 300, {
-        type: "spring",
-        stiffness: 150,
-        damping: 20,
-        duration: 0.5,
+    if (Math.abs(xVal) > 80) {
+      animate(x, xVal < 0 ? -200 : 200, {
+        duration: 0.2,
+        ease: "easeOut",
         onComplete: () => {
           setTweets((prev) => prev.filter((t) => t.id !== id));
           onSwipe(xVal > 0, isTrue);
@@ -247,10 +238,8 @@ const TweetCard = ({
       });
     } else {
       animate(x, 0, {
-        type: "spring",
-        stiffness: 300,
-        damping: 25,
-        duration: 0.5
+        duration: 0.2,
+        ease: "easeOut"
       });
     }
   };
@@ -276,30 +265,25 @@ const TweetCard = ({
   const style = {
     x: isTop ? x : 0,
     rotate: isTop ? rotate : 0,
-    opacity,
-    background,
+    opacity: isTop ? opacity : 1,
+    backgroundColor: isTop ? backgroundColor : "#ffffff",
     zIndex: index,
-    scale: isSecond ? 0.95 : 1,
-    y: isSecond ? 10 : 0,
-    willChange: isTop ? 'transform' : 'auto'
+    scale: isSecond ? 0.98 : 1,
+    y: isSecond ? 5 : 0,
   };
 
   return (
     <motion.div
-      className="absolute inset-0 w-full h-full rounded-2xl p-4 shadow-lg cursor-grab active:cursor-grabbing bg-white touch-manipulation font-['Helvetica'] will-change-transform"
+      className="absolute inset-0 w-full h-full rounded-2xl p-4 shadow-lg cursor-grab active:cursor-grabbing touch-manipulation font-['Helvetica'] will-change-transform"
       style={style}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.7}
-      dragMomentum={true}
+      dragElastic={0.5}
+      dragMomentum={false}
       onDragEnd={handleDragEnd}
-      whileTap={{ scale: isTop ? 1.02 : 1 }}
-      animate={{ scale: isTop ? 1 : isSecond ? 0.95 : 0.9 }}
       transition={{ 
-        type: "spring", 
-        stiffness: 150,
-        damping: 20,
-        mass: 0.8
+        duration: 0.2,
+        ease: "easeOut"
       }}
     >
       <div className="flex flex-col h-full">
