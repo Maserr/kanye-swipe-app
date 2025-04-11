@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { collection, getDocs, query} from "firebase/firestore";
 import { db } from "../../firebase";
@@ -71,7 +71,7 @@ const TweetGame = () => {
     fetchTweets();
   }, []);
 
-  const handleSwipe = (isRight: boolean, isTrue: boolean) => {
+  const handleSwipe = useCallback((isRight: boolean, isTrue: boolean) => {
     const correct = (isRight && isTrue) || (!isRight && !isTrue);
     
     if (correct) {
@@ -94,15 +94,15 @@ const TweetGame = () => {
     
     setShowScoreAnimation(true);
     setTimeout(() => setShowScoreAnimation(false), 500);
-  };
+  }, [wrongSound]);
 
-  const handleButtonClick = (isRight: boolean) => {
+  const handleButtonClick = useCallback((isRight: boolean) => {
     if (tweets.length === 0) return;
     
     const currentTweet = tweets[tweets.length - 1];
     setTweets((prev) => prev.filter((t) => t.id !== currentTweet.id));
     handleSwipe(isRight, currentTweet.true);
-  };
+  }, [tweets, handleSwipe]);
 
   const handleRestart = () => {
     setLives(3);
@@ -203,19 +203,46 @@ const TweetCard = ({
   onSwipe,
   index,
 }: TweetCardProps) => {
+  const generateRandomStats = () => {
+    return {
+      replies: Math.floor(Math.random() * 1000),
+      reposts: Math.floor(Math.random() * 2000),
+      likes: Math.floor(Math.random() * 10000),
+      timestamp: new Date(
+        Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)
+      ).toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    };
+  };
+
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-100, 100], [-5, 5]);
-  const opacity = useTransform(x, [-100, 0, 100], [0.5, 1, 0.5]);
+  const rotate = useTransform(x, [-100, 100], [-2, 2]);
   
-  // Simplified background color transform
   const backgroundColor = useTransform(
     x,
-    [-100, -50, 0, 50, 100],
-    ["rgb(239, 68, 68)", "rgb(255, 255, 255)", "rgb(255, 255, 255)", "rgb(255, 255, 255)", "rgb(34, 197, 94)"]
+    [-100, 0, 100],
+    ["rgb(239, 68, 68)", "rgb(255, 255, 255)", "rgb(34, 197, 94)"]
   );
   
   const isTop = index === tweets.length - 1;
   const isSecond = index === tweets.length - 2;
+
+  const style = useMemo(() => ({
+    x: isTop ? x : 0,
+    rotate: isTop ? rotate : 0,
+    backgroundColor: isTop ? backgroundColor : "#ffffff",
+    zIndex: index,
+    scale: isSecond ? 0.98 : 1,
+    y: isSecond ? 5 : 0,
+  }), [x, rotate, backgroundColor, index, isTop, isSecond]);
+
+  const stats = useMemo(() => generateRandomStats(), []);
 
   const handleDragEnd = () => {
     const xVal = x.get();
@@ -236,43 +263,15 @@ const TweetCard = ({
     }
   };
 
-  const generateRandomStats = () => {
-    return {
-      replies: Math.floor(Math.random() * 1000),
-      reposts: Math.floor(Math.random() * 2000),
-      likes: Math.floor(Math.random() * 10000),
-      timestamp: new Date(
-        Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)
-      ).toLocaleString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      })
-    };
-  };
-
-  const style = {
-    x: isTop ? x : 0,
-    rotate: isTop ? rotate : 0,
-    opacity: isTop ? opacity : 1,
-    backgroundColor: isTop ? backgroundColor : "#ffffff",
-    zIndex: index,
-    scale: isSecond ? 0.98 : 1,
-    y: isSecond ? 5 : 0,
-  };
-
   return (
     <motion.div
       style={style}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.5}
+      dragElastic={0.7}
       dragMomentum={false}
       onDragEnd={handleDragEnd}
-      className="absolute inset-0 bg-white rounded-2xl p-4 shadow-lg cursor-grab active:cursor-grabbing touch-none"
+      className="absolute inset-0 bg-white rounded-2xl p-4 shadow-lg cursor-grab active:cursor-grabbing touch-none will-change-transform"
       transition={{ 
         duration: 0.2,
         ease: "easeOut"
@@ -286,8 +285,9 @@ const TweetCard = ({
               alt="Ye"
               fill
               className="object-cover"
-              sizes="(max-width: 768px) 40px, 40px"
-              priority
+              sizes="40px"
+              priority={isTop}
+              loading={isTop ? "eager" : "lazy"}
             />
           </div>
           
@@ -308,13 +308,13 @@ const TweetCard = ({
 
         <div className="mt-auto font-['Helvetica']">
           <div className="text-[#536471] text-[15px] mb-3">
-            {generateRandomStats().timestamp}
+            {stats.timestamp}
           </div>
           <div className="border-t border-[#EFF3F4] pt-3">
             <div className="flex gap-5 text-[#536471] text-[13px]">
-              <span>{generateRandomStats().replies.toLocaleString()} Replies</span>
-              <span>{generateRandomStats().reposts.toLocaleString()} Reposts</span>
-              <span>{generateRandomStats().likes.toLocaleString()} Likes</span>
+              <span>{stats.replies.toLocaleString()} Replies</span>
+              <span>{stats.reposts.toLocaleString()} Reposts</span>
+              <span>{stats.likes.toLocaleString()} Likes</span>
             </div>
           </div>
         </div>
